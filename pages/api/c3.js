@@ -5,7 +5,7 @@ export const config = {
     },
 }
 
-export default async function handler(req, res) {
+export default function handler(req, res) {
     const https = require('https');
 
     const options = {
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     console.log('VERCEL_URL', process.env.VERCEL_URL)
     console.log('VERCEL_REGION', process.env.VERCEL_REGION)
 
-    await https.get(options, async (res1) => {
+    https.get(options, async (res1) => {
         let body = "";
 
         res1.on("data", (chunk) => {
@@ -63,7 +63,6 @@ async function sendmail(connected, temp) {
     const sgMail = require('@sendgrid/mail');
     sgMail.setApiKey(process.env.SENDGRID_API_PING_SPA2);
     console.log('starting email')
-    console.log('sendgrid key', process.env.SENDGRID_API_PING_SPA2);
     const msg = {
         to: 'tom.mccollough@gmail.com', // Change to your recipient
         from: 'tom@tommccollough.com', // Change to your verified sender
@@ -86,11 +85,9 @@ async function sendtext(connected, temp) {
     const authToken = process.env.TWILIO_AUTH_TOKEN;
     const client = require('twilio')(accountSid, authToken);
     console.log('starting sms')
-    console.log('twilio account id', process.env.TWILIO_ACCOUNT_SID);
-    console.log('twilio auth token', process.env.TWILIO_AUTH_TOKEN);
     await client.messages
         .create({
-            body: `Spa is connected: ${connected}, temp is ${temp}`,
+            body: `Spa is connected: ${connected}, temp is ${temp}, region ${process.env.VERCEL_REGION}`,
             from: '+18888207345',
             to: '+18016478498'
         })
