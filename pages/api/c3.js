@@ -87,6 +87,6 @@ function sendtext(connected, temp) {
             from: '+18888207345',
             to: '+18016478498'
         })
-        .then(message => console.log(message.sid));
-    console.log('SMS sent')
+        .then(message => console.log(`sms was successful ${message.sid}`));
+    console.log('SMS setup done')
 }
