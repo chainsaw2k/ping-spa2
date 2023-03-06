@@ -5,7 +5,7 @@ export const config = {
     },
 }
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
     const https = require('https');
 
     const options = {
@@ -19,7 +19,11 @@ export default function handler(req, res) {
         },
     };
 
-    https.get(options, async (res1) => {
+    console.log('STARTING ============================================')
+    console.log('VERCEL_URL', process.env.VERCEL_URL)
+    console.log('VERCEL_REGION', process.env.VERCEL_REGION)
+
+    await https.get(options, async (res1) => {
         let body = "";
 
         res1.on("data", (chunk) => {
