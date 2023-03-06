@@ -70,8 +70,10 @@ function sendmail(connected, temp) {
             console.log('Email sent')
         })
         .catch((error) => {
-            console.error(error)
-        })
+            console.error(error);
+            console.log('email did not work');
+        });
+        console.log('email setup done');
 }
 
 function sendtext(connected, temp) {
