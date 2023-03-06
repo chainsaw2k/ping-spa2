@@ -15,7 +15,7 @@ export default function handler(req, res) {
         method: 'GET',
         headers: {
             'accept': 'application/json',
-            'X-API-KEY': process.env.ARCTIC_API_KEY,
+            'X-API-KEY': 'blah',
         },
     };
 
