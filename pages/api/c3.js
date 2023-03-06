@@ -30,12 +30,12 @@ export default function handler(req, res) {
             body += chunk;
         });
 
-        res1.on("end", async () => {
+        res1.on("end", () => {
             try {
                 let json = JSON.parse(body);
                 // do something with JSON
-                await sendmail(json.connected, json.temperatureF);
-                await sendtext(json.connected, json.temperatureF);
+                 sendmail(json.connected, json.temperatureF);
+                 sendtext(json.connected, json.temperatureF);
                 res.status(200).
                     send({
                         connected: json.connected,
