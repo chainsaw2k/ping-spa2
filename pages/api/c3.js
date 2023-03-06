@@ -23,14 +23,14 @@ export default function handler(req, res) {
     console.log('VERCEL_URL', process.env.VERCEL_URL)
     console.log('VERCEL_REGION', process.env.VERCEL_REGION)
 
-    https.get(options, async (res1) => {
+    https.get(options, (res1) => {
         let body = "";
 
         res1.on("data", (chunk) => {
             body += chunk;
         });
 
-        await res1.on("end", async () => {
+        res1.on("end", async () => {
             try {
                 let json = JSON.parse(body);
                 // do something with JSON
