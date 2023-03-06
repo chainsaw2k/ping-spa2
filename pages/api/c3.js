@@ -19,19 +19,19 @@ export default function handler(req, res) {
         },
     };
 
-    https.get(options, (res1) => {
+    https.get(options, async (res1) => {
         let body = "";
 
         res1.on("data", (chunk) => {
             body += chunk;
         });
 
-        res1.on("end", () => {
+        await res1.on("end", async () => {
             try {
                 let json = JSON.parse(body);
                 // do something with JSON
-                sendmail(json.connected, json.temperatureF);
-                sendtext(json.connected, json.temperatureF);
+                await sendmail(json.connected, json.temperatureF);
+                await sendtext(json.connected, json.temperatureF);
                 res.status(200).
                     send({
                         connected: json.connected,
@@ -84,11 +84,12 @@ async function sendtext(connected, temp) {
     console.log('starting sms')
     console.log('twilio account id', process.env.TWILIO_ACCOUNT_SID);
     console.log('twilio auth token', process.env.TWILIO_AUTH_TOKEN);
-    await client.messages.create({
-        body: `Spa is connected: ${connected}, temp is ${temp}`,
-        from: '+18888207345',
-        to: '+18016478498'
-    })
+    await client.messages
+        .create({
+            body: `Spa is connected: ${connected}, temp is ${temp}`,
+            from: '+18888207345',
+            to: '+18016478498'
+        })
         .then(message => console.log(`sms was successful, message id is ${message.sid}`));
     console.log('SMS function done');
 }
