@@ -1,3 +1,4 @@
+import { stat } from 'fs';
 
 export const config = {
     api: {
@@ -19,7 +20,11 @@ export default function handler(req, res) {
         },
     };
 
-    console.log('STARTING ============================================')
+    let date = new Date();
+    let str = date.toUTCString();
+    let alertID = date.valueOf();
+
+    console.log(`STARTING ${str} ============================================`)
     console.log('VERCEL_URL', process.env.VERCEL_URL)
     console.log('VERCEL_REGION', process.env.VERCEL_REGION)
 
@@ -33,9 +38,14 @@ export default function handler(req, res) {
         res1.on("end", async () => {
             try {
                 let json = JSON.parse(body);
-                // do something with JSON
-                await sendmail(json.connected, json.temperatureF);
-                await sendtext(json.connected, json.temperatureF);
+                let state = json.connected ? "ONLINE" : "OFFLINE";
+                await sendmail(state, json.temperatureF, str);
+                await sendtext(state, json.temperatureF, str);
+                if (!json.connected) {
+                    // alert grafana. maybe prolly should emit status instead, and let grafana do the alerting based upon SLO technology. but for now will do this every single time i get a failure
+                    await alertGrafanaOnCall(alertID, str);
+                }
+                
                 res.status(200).
                     send({
                         connected: json.connected,
@@ -57,7 +67,7 @@ export default function handler(req, res) {
     console.log('handler done')
 }
 
-async function sendmail(connected, temp) {
+async function sendmail(connected, temp, str) {
     // using Twilio SendGrid's v3 Node.js Library
     // https://github.com/sendgrid/sendgrid-nodejs
     const sgMail = require('@sendgrid/mail');
@@ -66,7 +76,7 @@ async function sendmail(connected, temp) {
     const msg = {
         to: 'tom.mccollough@gmail.com', // Change to your recipient
         from: 'tom@tommccollough.com', // Change to your verified sender
-        subject: `Spa is connected: ${connected}, temp is ${temp} deg. F`,
+        subject: `Spa ${connected}, temp is ${temp} deg. F ${str}`,
         text: 'and easy to do anywhere, even with Node.js',
         html: '<strong>and easy to do anywhere, even with Node.js</strong>',
     }
@@ -77,7 +87,7 @@ async function sendmail(connected, temp) {
     console.log('email function done');
 }
 
-async function sendtext(connected, temp) {
+async function sendtext(connected, temp, str) {
     // Download the helper library from https://www.twilio.com/docs/node/install
     // Find your Account SID and Auth Token at twilio.com/console
     // and set the environment variables. See http://twil.io/secure
@@ -87,10 +97,30 @@ async function sendtext(connected, temp) {
     console.log('starting sms')
     await client.messages
         .create({
-            body: `Spa is connected: ${connected}, temp is ${temp}, region ${process.env.VERCEL_REGION}`,
+            body: `Spa ${connected}, temp is ${temp}, region ${process.env.VERCEL_REGION}, ${str}`,
             from: '+18888207345',
             to: '+18016478498'
         })
         .then(message => console.log(`sms was successful, message id is ${message.sid}`));
     console.log('SMS function done');
+}
+
+async function alertGrafanaOnCall(alertID, str) {
+    console.log('alerting starting')
+    await fetch("https://oncall-prod-us-central-0.grafana.net/oncall/integrations/v1/webhook/7wEIEYPdpFa7pYyJ0xfGXPofx/", {
+        method: "POST",
+        body: JSON.stringify({
+            alert_uid: alertID,
+            title: "Hot tub is OFFLINE",
+            checkTime: str,
+            state: "alerting",
+            message: "Check if the house has power. If that's good, then check the spa breaker on the back patio."
+        }),
+        headers: {
+            'Content-Type': 'Application/json',
+        }
+    })
+    .then((response)=> { console.log('response', response); response.json(); } )
+    .then((json)=> console.log('json', json));
+    console.log('alerting done')
 }
